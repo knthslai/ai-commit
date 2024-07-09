@@ -2,56 +2,45 @@
 
 'use strict'
 import { execSync } from "child_process";
-import { ChatGPTAPI } from "chatgpt";
 import inquirer from "inquirer";
-import { getArgs, checkGitRepository } from "./helpers.js";
-import { addGitmojiToCommitMessage } from './gitmoji.js';
+import { checkGitRepository } from "./helpers.js";
+import { addGitmojiToCommitMessage } from "./gitmoji.js";
 import { filterApi } from "./filterApi.js";
-import { AI_PROVIDER, MODEL, args } from "./config.js"
-
-
+import { args } from "./config.js";
 
 const REGENERATE_MSG = "♻️ Regenerate Commit Messages";
 
+const language = "english";
 
-
-console.log('Ai provider: ', AI_PROVIDER);
-
-const ENDPOINT = args.ENDPOINT || process.env.ENDPOINT
-
-const apiKey = args.apiKey || process.env.OPENAI_API_KEY;
-
-const language = args.language || process.env.AI_COMMIT_LANGUAGE || 'english';
-
-if (AI_PROVIDER == 'openai' && !apiKey) {
-  console.error("Please set the OPENAI_API_KEY environment variable.");
-  process.exit(1);
-}
-
-let template = args.template || process.env.AI_COMMIT_COMMIT_TEMPLATE
-const doAddEmoji = args.emoji || process.env.AI_COMMIT_ADD_EMOJI
-
-const commitType = args['commit-type'];
+const commitType = args["commit-type"];
 
 const processTemplate = ({ template, commitMessage }) => {
-  if (!template.includes('COMMIT_MESSAGE')) {
-    console.log(`Warning: template doesn't include {COMMIT_MESSAGE}`)
+  if (!template.includes("COMMIT_MESSAGE")) {
+    console.log(`Warning: template doesn't include {COMMIT_MESSAGE}`);
 
     return commitMessage;
   }
 
-  let finalCommitMessage = template.replaceAll("{COMMIT_MESSAGE}", commitMessage);
+  let finalCommitMessage = template.replaceAll(
+    "{COMMIT_MESSAGE}",
+    commitMessage
+  );
 
-  if (finalCommitMessage.includes('GIT_BRANCH')) {
-    const currentBranch = execSync("git branch --show-current").toString().replaceAll("\n", "");
+  if (finalCommitMessage.includes("GIT_BRANCH")) {
+    const currentBranch = execSync("git branch --show-current")
+      .toString()
+      .replaceAll("\n", "");
 
-    console.log('Using currentBranch: ', currentBranch);
+    console.log("Using currentBranch: ", currentBranch);
 
-    finalCommitMessage = finalCommitMessage.replaceAll("{GIT_BRANCH}", currentBranch)
+    finalCommitMessage = finalCommitMessage.replaceAll(
+      "{GIT_BRANCH}",
+      currentBranch
+    );
   }
 
   return finalCommitMessage;
-}
+};
 
 const makeCommit = (input) => {
   console.log("Committing Message... 🚀 ");
@@ -59,79 +48,53 @@ const makeCommit = (input) => {
   console.log("Commit Successful! 🎉");
 };
 
-
 const processEmoji = (msg, doAddEmoji) => {
   if (doAddEmoji) {
     return addGitmojiToCommitMessage(msg);
   }
 
   return msg;
-}
+};
 
 /**
  * send prompt to ai.
  */
 const sendMessage = async (input) => {
-  if (AI_PROVIDER == 'ollama') {
-    //mistral as default since it's fast and clever model
-    const model = MODEL || 'mistral'
-    const url = 'http://localhost:11434/api/generate'
-    const data = {
-      model,
-      prompt: input,
-      stream: false
-    }
-    console.log('prompting ollama...', url, model)
-    try {
-      const response = await fetch(url, {
-
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-          // 'Content-Type': 'application/x-www-form-urlencoded',
-        },
-
-      })
-      const responseJson=await response.json();
-      const answer = responseJson.response
-      console.log('response: ', answer)
-      console.log('prompting ai done!')
-      return answer
-    } catch (err) {
-      throw new Error('local model issues. details:' + err.message)
-    }
-  }
-
-  if (AI_PROVIDER == 'openai') {
-
-    console.log('prompting chat gpt...')
-    const api = new ChatGPTAPI({
-      apiKey,
+  //mistral as default since it's fast and clever model
+  const model = "mistral";
+  const url = "http://localhost:11434/api/generate";
+  const data = {
+    model,
+    prompt: input,
+    stream: false,
+  };
+  console.log("prompting ollama...", url, model);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
-    const { text } = await api.sendMessage(input);
-    console.log('prompting ai done!')
-    return text
-
+    const responseJson = await response.json();
+    const answer = responseJson.response;
+    console.log("response: ", answer);
+    console.log("prompting ai done!");
+    return answer;
+  } catch (err) {
+    throw new Error("local model issues. details:" + err.message);
   }
-
-}
+};
 
 const getPromptForSingleCommit = (diff) => {
-  if (AI_PROVIDER == "openai") {
-    return (
-      "I want you to act as the author of a commit message in git."
-      + `I'll enter a git diff, and your job is to convert it into a useful commit message in ${language} language`
-      + (commitType ? ` with commit type '${commitType}'. ` : ". ")
-      + "Do not preface the commit with anything, use the present tense, return the full sentence, and use the conventional commits specification (<type in lowercase>: <subject>): "
-      + diff
-    );
-  }
   //for less smart models, give simpler instruction.
   return (
-    "Summarize this git diff into a useful, 10 words commit message"
-    + (commitType ? ` with commit type '${commitType}.'` : "")
-    + ": " + diff
+    "Summarize this git diff into a useful, 10 words commit message" +
+    (commitType ? ` with commit type '${commitType}.'` : "") +
+    ": " +
+    diff
   );
 };
 
