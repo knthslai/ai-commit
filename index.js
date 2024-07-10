@@ -67,7 +67,7 @@ const sendMessage = async (input) => {
     prompt: input,
     stream: false,
   };
-  console.log("prompting ollama...", url, model);
+  console.log("Prompting -> Ollama: ", model);
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -79,8 +79,7 @@ const sendMessage = async (input) => {
     });
     const responseJson = await response.json();
     const answer = responseJson.response;
-    console.log("response: ", answer);
-    console.log("prompting ai done!");
+
     return answer;
   } catch (err) {
     throw new Error("local model issues. details:" + err.message);
