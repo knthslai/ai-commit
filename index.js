@@ -60,8 +60,7 @@ const processEmoji = (msg, doAddEmoji) => {
  * send prompt to ai.
  */
 const sendMessage = async (input) => {
-  //mistral as default since it's fast and clever model
-  const model = "mistral";
+  const model = "tavernari/git-commit-message";
   const url = "http://localhost:11434/api/generate";
   const data = {
     model,
