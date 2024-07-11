@@ -12,7 +12,7 @@ const REGENERATE_MSG = "♻️ Regenerate Commit Messages";
 
 const language = "english";
 
-const prefix = args["prefix"] || "";
+const prefix = args["prefix"];
 
 const processTemplate = ({ template, commitMessage }) => {
   if (!template.includes("COMMIT_MESSAGE")) {
@@ -85,7 +85,7 @@ const sendMessage = async (input) => {
 const getPromptForSingleCommit = (diff) => {
   //for less smart models, give simpler instruction.
   return (
-    "Summarize this git diff into a useful, 10 words commit message. The commit message should start with a commit type (feat, fix, docs, style, refactor, test, chore) that best matches the changes made to the code: " +
+    "Summarize this git diff into a useful, 10 words commit message with a commit type (feat, fix, docs, style, refactor, test, chore) that best matches the changes made to the code: " +
     diff
   );
 };
@@ -98,7 +98,9 @@ const generateSingleCommit = async (diff) => {
 
   const text = await sendMessage(prompt);
 
-  let finalCommitMessage = prefix + " - " + processEmoji(text);
+  let finalCommitMessage = prefix?.length
+    ? prefix + " - " + processEmoji(text)
+    : processEmoji(text);
 
   console.log(
     `Proposed Commit:\n------------------------------\n${finalCommitMessage}\n------------------------------`

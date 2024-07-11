@@ -19,12 +19,12 @@ function addGitmojiToCommitMessage(commitMessage) {
     }
   }
   for (const key in typeToGitmoji) {
-    if (commitMessage.includes(key)) {
+    if (commitMessage.includes(` ${key} `)) {
       return `${typeToGitmoji[key]} ${commitMessage}`;
     }
   }
 
-  return commitMessage;
+  return "🔧 " + commitMessage;
 }
 
 export { addGitmojiToCommitMessage }
