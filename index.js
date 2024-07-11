@@ -62,8 +62,8 @@ const generateSingleCommit = async (diff) => {
   const text = await sendMessage(prompt);
 
   let finalCommitMessage = prefix?.length
-    ? prefix + " - " + addGitmojiToCommitMessage(text.trim())
-    : addGitmojiToCommitMessage(text.trim());
+    ? prefix + " - " + addGitmojiToCommitMessage(text)
+    : addGitmojiToCommitMessage(text);
 
   console.log(
     `Proposed Commit:\n------------------------------\n${finalCommitMessage}\n------------------------------`
