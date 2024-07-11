@@ -1,13 +1,13 @@
 function addGitmojiToCommitMessage(commitMessage) {
   // Define the mapping of commit types to gitmojis
   const typeToGitmoji = {
-    feat: "✨ (feat): ",
-    fix: "🚑 (fix): ",
-    docs: "📝 (docs): ",
-    style: "💄 (style): ",
     refactor: "♻️ (refactor): ",
-    test: "✅ (test): ",
+    style: "💄 (style): ",
     chore: "🔧 (chore): ",
+    feat: "✨ (feat): ",
+    docs: "📝 (docs): ",
+    test: "✅ (test): ",
+    fix: "🚑 (fix): ",
   };
 
   // iterate over each key in the typeToGitmoji object and check if the commitMessage starts with the corresponding key
@@ -19,7 +19,8 @@ function addGitmojiToCommitMessage(commitMessage) {
     }
   }
   for (const key in typeToGitmoji) {
-    if (commitMessage.includes(` ${key} `)) {
+    // check if the commitMessage contains the full key
+    if (commitMessage.includes(/(\s|^)(${key})/)) {
       return `${typeToGitmoji[key]}${commitMessage}`;
     }
   }
