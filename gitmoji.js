@@ -21,18 +21,14 @@ function addGitmojiToCommitMessage(commitMessage) {
 
   for (const key in typeToGitmoji) {
     // check if the commitMessage contains the full capitalized key
-    if (
-      commitMessage.includes(
-        /(\s|^)(${key.slice(0, 1).toUpperCase() + key.slice(1)})/
-      )
-    ) {
+    if (commitMessage.includes(key.slice(0, 1).toUpperCase() + key.slice(1))) {
       return `${typeToGitmoji[key]}${commitMessage}`;
     }
   }
 
   for (const key in typeToGitmoji) {
     // check if the commitMessage contains the full key
-    if (commitMessage.includes(/(\s|^)(${key})/)) {
+    if (commitMessage.includes(key)) {
       return `${typeToGitmoji[key]}${commitMessage}`;
     }
   }
