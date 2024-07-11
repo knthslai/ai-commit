@@ -12,7 +12,7 @@ const REGENERATE_MSG = "♻️ Regenerate Commit Messages";
 
 const language = "english";
 
-const prefix = args["prefix"];
+const prefix = args["prefix"] || "";
 
 const processTemplate = ({ template, commitMessage }) => {
   if (!template.includes("COMMIT_MESSAGE")) {
@@ -105,24 +105,24 @@ const generateSingleCommit = async (diff) => {
   console.log(
     `Proposed Commit:\n------------------------------\n${finalCommitMessage}\n------------------------------`
   );
-  if (args.force) {
-    makeCommit(finalCommitMessage);
-    return;
-  }
+  // if (args.force) {
+  //   makeCommit(finalCommitMessage);
+  //   return;
+  // }
 
-  const answer = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "continue",
-      message: "Do you want to continue?",
-      default: true,
-    },
-  ]);
+  // const answer = await inquirer.prompt([
+  //   {
+  //     type: "confirm",
+  //     name: "continue",
+  //     message: "Do you want to continue?",
+  //     default: true,
+  //   },
+  // ]);
 
-  if (!answer.continue) {
-    console.log("Commit aborted by user 🙅‍♂️");
-    process.exit(1);
-  }
+  // if (!answer.continue) {
+  //   console.log("Commit aborted by user 🙅‍♂️");
+  //   process.exit(1);
+  // }
 
   makeCommit(finalCommitMessage);
 };
