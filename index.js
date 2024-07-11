@@ -12,8 +12,7 @@ const REGENERATE_MSG = "♻️ Regenerate Commit Messages";
 
 const language = "english";
 
-console.log("🚧: args", args);
-const commitType = args["commit-type"];
+const prefix = args["prefix"] || "";
 
 const processTemplate = ({ template, commitMessage }) => {
   if (!template.includes("COMMIT_MESSAGE")) {
@@ -49,12 +48,8 @@ const makeCommit = (input) => {
   console.log("Commit Successful! 🎉");
 };
 
-const processEmoji = (msg, doAddEmoji) => {
-  if (doAddEmoji) {
-    return addGitmojiToCommitMessage(msg);
-  }
-
-  return msg;
+const processEmoji = (msg) => {
+  return addGitmojiToCommitMessage(msg);
 };
 
 /**
@@ -90,9 +85,7 @@ const sendMessage = async (input) => {
 const getPromptForSingleCommit = (diff) => {
   //for less smart models, give simpler instruction.
   return (
-    "Summarize this git diff into a useful, 10 words commit message" +
-    (commitType ? ` with commit type '${commitType}.'` : "") +
-    ": " +
+    "Summarize this git diff into a useful, 10 words commit message with a commit type (feat, fix, docs, style, refactor, test, chore) that best matches the changes made to the code: " +
     diff
   );
 };
@@ -105,65 +98,65 @@ const generateSingleCommit = async (diff) => {
 
   const text = await sendMessage(prompt);
 
-  let finalCommitMessage = processEmoji(text, args.emoji);
+  let finalCommitMessage = prefix + processEmoji(text);
 
-  if (args.template) {
-    finalCommitMessage = processTemplate({
-      template: args.template,
-      commitMessage: finalCommitMessage,
-    });
-
-    console.log(
-      `Proposed Commit With Template:\n------------------------------\n${finalCommitMessage}\n------------------------------`
-    );
-  } else {
-    console.log(
-      `Proposed Commit:\n------------------------------\n${finalCommitMessage}\n------------------------------`
-    );
+  console.log(
+    `Proposed Commit:\n------------------------------\n${finalCommitMessage}\n------------------------------`
+  );
+  if (args.force) {
+    makeCommit(finalCommitMessage);
+    return;
   }
 
-  // if (args.force) {
-  //   makeCommit(finalCommitMessage);
-  //   return;
-  // }
+  const answer = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "continue",
+      message: "Do you want to continue?",
+      default: true,
+    },
+  ]);
 
-  // const answer = await inquirer.prompt([
-  //   {
-  //     type: "confirm",
-  //     name: "continue",
-  //     message: "Do you want to continue?",
-  //     default: true,
-  //   },
-  // ]);
-
-  // if (!answer.continue) {
-  //   console.log("Commit aborted by user 🙅‍♂️");
-  //   process.exit(1);
-  // }
+  if (!answer.continue) {
+    console.log("Commit aborted by user 🙅‍♂️");
+    process.exit(1);
+  }
 
   makeCommit(finalCommitMessage);
 };
 
 const generateListCommits = async (diff, numOptions = 5) => {
   const prompt =
-    "I want you to act as the author of a commit message in git."
-    + `I'll enter a git diff, and your job is to convert it into a useful commit message in ${language} language`
-    + (commitType ? ` with commit type '${commitType}.', ` : ", ")
-    + `and make ${numOptions} options that are separated by ";".`
-    + "For each option, use the present tense, return the full sentence, and use the conventional commits specification (<type in lowercase>: <subject>):"
-    + diff;
+    "I want you to act as the author of a commit message in git." +
+    `I'll enter a git diff, and your job is to convert it into a useful commit message in ${language} language` +
+    (commitType ? ` with commit type '${commitType}.', ` : ", ") +
+    `and make ${numOptions} options that are separated by ";".` +
+    "For each option, use the present tense, return the full sentence, and use the conventional commits specification (<type in lowercase>: <subject>):" +
+    diff;
 
-  if (!await filterApi({ prompt, filterFee: args['filter-fee'], numCompletion: numOptions })) process.exit(1);
+  if (
+    !(await filterApi({
+      prompt,
+      filterFee: args["filter-fee"],
+      numCompletion: numOptions,
+    }))
+  )
+    process.exit(1);
 
   const text = await sendMessage(prompt);
 
-  let msgs = text.split(";").map((msg) => msg.trim()).map(msg => processEmoji(msg, args.emoji));
+  let msgs = text
+    .split(";")
+    .map((msg) => msg.trim())
+    .map((msg) => processEmoji(msg, args.emoji));
 
   if (args.template) {
-    msgs = msgs.map(msg => processTemplate({
-      template: args.template,
-      commitMessage: msg,
-    }))
+    msgs = msgs.map((msg) =>
+      processTemplate({
+        template: args.template,
+        commitMessage: msg,
+      })
+    );
   }
 
   // add regenerate option
@@ -205,10 +198,7 @@ async function generateAICommit() {
     process.exit(1);
   }
 
-
-  args.list
-    ? await generateListCommits(diff)
-    : await generateSingleCommit(diff);
+  await generateSingleCommit(diff);
 }
 
 await generateAICommit();
