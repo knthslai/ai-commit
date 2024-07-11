@@ -12,7 +12,7 @@ const REGENERATE_MSG = "♻️ Regenerate Commit Messages";
 
 const language = "english";
 
-const prefix = args["prefix"];
+const prefix = args["prefix"] || "";
 
 const processTemplate = ({ template, commitMessage }) => {
   if (!template.includes("COMMIT_MESSAGE")) {
