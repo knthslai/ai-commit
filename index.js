@@ -12,6 +12,7 @@ const REGENERATE_MSG = "♻️ Regenerate Commit Messages";
 
 const language = "english";
 
+console.log("🚧: args", args);
 const commitType = args["commit-type"];
 
 const processTemplate = ({ template, commitMessage }) => {
@@ -97,9 +98,10 @@ const getPromptForSingleCommit = (diff) => {
 };
 
 const generateSingleCommit = async (diff) => {
-  const prompt = getPromptForSingleCommit(diff)
+  const prompt = getPromptForSingleCommit(diff);
 
-  if (!await filterApi({ prompt, filterFee: args['filter-fee'] })) process.exit(1);
+  if (!(await filterApi({ prompt, filterFee: args["filter-fee"] })))
+    process.exit(1);
 
   const text = await sendMessage(prompt);
 
@@ -109,39 +111,35 @@ const generateSingleCommit = async (diff) => {
     finalCommitMessage = processTemplate({
       template: args.template,
       commitMessage: finalCommitMessage,
-    })
+    });
 
     console.log(
       `Proposed Commit With Template:\n------------------------------\n${finalCommitMessage}\n------------------------------`
     );
   } else {
-
     console.log(
       `Proposed Commit:\n------------------------------\n${finalCommitMessage}\n------------------------------`
     );
-
   }
 
+  // if (args.force) {
+  //   makeCommit(finalCommitMessage);
+  //   return;
+  // }
 
+  // const answer = await inquirer.prompt([
+  //   {
+  //     type: "confirm",
+  //     name: "continue",
+  //     message: "Do you want to continue?",
+  //     default: true,
+  //   },
+  // ]);
 
-  if (args.force) {
-    makeCommit(finalCommitMessage);
-    return;
-  }
-
-  const answer = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "continue",
-      message: "Do you want to continue?",
-      default: true,
-    },
-  ]);
-
-  if (!answer.continue) {
-    console.log("Commit aborted by user 🙅‍♂️");
-    process.exit(1);
-  }
+  // if (!answer.continue) {
+  //   console.log("Commit aborted by user 🙅‍♂️");
+  //   process.exit(1);
+  // }
 
   makeCommit(finalCommitMessage);
 };
