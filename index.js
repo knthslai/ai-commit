@@ -19,7 +19,7 @@ const makeCommit = (input) => {
  * send prompt to ai.
  */
 const sendMessage = async (input) => {
-  const model = "starcoder2";
+  const model = "tavernari/git-commit-message";
   const url = "http://localhost:11434/api/generate";
   const data = {
     model,
