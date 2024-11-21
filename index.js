@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-'use strict'
+"use strict";
 import { execSync } from "child_process";
 import { checkGitRepository } from "./helpers.js";
 import { addGitmojiToCommitMessage } from "./gitmoji.js";
@@ -11,8 +11,20 @@ const prefix = args["prefix"] || "";
 
 const makeCommit = (input) => {
   console.log("Committing Message... 🚀 ");
-  execSync(`git commit -F -`, { input });
-  console.log("Commit Successful! 🎉");
+  try {
+    execSync(`git commit -F -`, { input });
+    console.log("Commit Successful! 🎉");
+  } catch (error) {
+    // Copy to clipboard using execSync
+    execSync("pbcopy", { input }); // for macOS
+    // For other platforms you might need:
+    // execSync('clip', { input }); // Windows
+    // execSync('xclip -selection clipboard', { input }); // Linux with xclip
+
+    console.log("❌ Commit failed!");
+    console.log("📋 Commit message has been copied to your clipboard");
+    process.exit(1);
+  }
 };
 
 /**
@@ -89,7 +101,6 @@ const generateSingleCommit = async (diff) => {
 
   makeCommit(finalCommitMessage);
 };
-
 
 async function generateAICommit() {
   const isGitRepository = checkGitRepository();
