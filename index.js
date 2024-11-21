@@ -38,22 +38,40 @@ const sendMessage = async (input) => {
     prompt: input,
     stream: false,
   };
-  console.log("Prompting -> Ollama: ", model);
-  try {
+
+  const makeRequest = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify(data),
       headers: {
         "Content-Type": "application/json",
-        // 'Content-Type': 'application/x-www-form-urlencoded',
       },
+      signal: controller.signal,
     });
-    const responseJson = await response.json();
-    const answer = responseJson.response;
 
-    return answer;
+    clearTimeout(timeoutId);
+    const responseJson = await response.json();
+    return responseJson.response;
+  };
+
+  try {
+    console.log("Prompting -> Ollama: ", model);
+    return await makeRequest();
   } catch (err) {
-    throw new Error("local model issues. details:" + err.message);
+    console.log("Initial request failed, restarting Ollama...");
+    try {
+      execSync("pkill ollama && ollama start");
+      console.log("Ollama restarted, retrying request...");
+      return await makeRequest();
+    } catch (retryErr) {
+      if (retryErr.name === "AbortError") {
+        throw new Error("Request timed out after 12 seconds");
+      }
+      throw new Error("local model issues. details:" + retryErr.message);
+    }
   }
 };
 
